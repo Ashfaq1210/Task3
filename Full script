@@ -1,0 +1,205 @@
+import pexpect
+from netmiko import ConnectHandler
+import re
+
+# Define device connection details for Netmiko
+device = {
+    'device_type': 'cisco_ios',
+    'ip': '192.168.56.101',  
+    'username': 'cisco',  
+    'password': 'cisco123!',  
+    'secret': 'class123!'  # Enable password
+}
+
+# Commands for configuring loopback and RIP
+config_commands = [
+    'interface loopback 1',
+    'ip address 10.1.1.1 255.255.255.255',  # Assign an IP to the loopback interface
+    'exit',
+    'router rip',
+    'version 2',                             # Use RIP version 2
+    'no auto-summary',                       # Disable auto-summary
+    'network 10.1.1.0',                      # Advertise the loopback in RIP
+    'network 192.168.56.0'                   # Replace with your network for RIP
+]
+
+# Hardening checks as regex patterns
+hardening_checks = {
+    "SSH enabled": r"ip ssh version 2",
+    "Telnet disabled": r"no\s+transport\s+input\s+telnet",
+    "Strong passwords enforced": r"security password min-length \d+",
+    "Logging configured": r"logging host \d+\.\d+\.\d+\.\d+",
+    "HTTP server disabled": r"no ip http server"
+}
+
+# Syslog configuration commands
+syslog_commands = [
+    'logging host 192.168.1.100',  
+    'logging trap informational',
+    'logging on'
+]
+
+def check_device_hardening():
+    """Fetch and check the running configuration for hardening compliance."""
+    try:
+        connection = ConnectHandler(**device)
+        print("Connected to the device successfully.")
+
+        # Get the running configuration
+        print("Fetching the running configuration...")
+        running_config = connection.send_command("show running-config")
+
+        # Perform hardening checks
+        print("\nPerforming hardening checks...")
+        for check, pattern in hardening_checks.items():
+            if re.search(pattern, running_config):
+                print(f"[PASS] {check}")
+            else:
+                print(f"[FAIL] {check}")
+
+        connection.disconnect()
+        print("\nConnection closed.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def configure_syslog():
+    """Configure the device to enable syslog for event logging."""
+    try:
+        connection = ConnectHandler(**device)
+        print("Connected to the device successfully.")
+
+        # Apply syslog configuration commands
+        print("Configuring syslog settings...")
+        output = connection.send_config_set(syslog_commands)
+        print("Syslog configuration output:")
+        print(output)
+
+        connection.disconnect()
+        print("\nSyslog configuration applied and connection closed.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def configure_loopback_and_rip():
+    """Configure a loopback interface and RIP routing."""
+    try:
+        connection = ConnectHandler(**device)
+        connection.enable()
+        
+        print("Connected to the device successfully.")
+        
+        # Send configuration commands
+        print("\nApplying configuration for loopback and RIP...")
+        output = connection.send_config_set(config_commands)
+        print(output)
+        
+        # Save the configuration
+        print("Saving the configuration...")
+        save_output = connection.send_command("write memory")
+        print(save_output)
+
+        connection.disconnect()
+        print("Configuration applied and connection closed.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+op = True
+while op == True:
+    print("\nMenu Options:")
+    print("T - Telnet connection and hostname change")
+    print("S - SSH connection and hostname change")
+    print("C - Save running config to file")
+    print("H - Perform hardening check")
+    print("Sy - Configure syslog settings")
+    print("L - Configure loopback and RIP")
+    print("Q - Quit the program")
+    
+    option = input("\nEnter an option: ")
+
+    if option.lower() == "t":
+        ip = '192.168.56.101'
+        user = 'cisco'
+        pwd = 'cisco123!'
+        new_name = input("Enter new hostname: ")
+
+        connection = pexpect.spawn(f'telnet {ip}', encoding='utf-8', timeout=20)
+        connection.expect('Username:')
+        connection.sendline(user)
+        connection.expect('Password:')
+        connection.sendline(pwd)
+        connection.expect('#')
+        
+        connection.sendline('configure terminal')
+        connection.expect(r'\(config\)#')
+        connection.sendline(f'hostname {new_name}')
+        connection.expect(f'{new_name}\(config\)#')
+        print(f"Hostname changed to {new_name} successfully.")
+        
+        connection.sendline('exit')
+        connection.close()
+
+    elif option.lower() == "s":
+        ip_address = '192.168.56.101'
+        username = 'cisco'
+        password = 'cisco123!'
+        password_enable = 'class123!'
+        new_hostname = input("Enter the new hostname: ")
+
+        session = pexpect.spawn(f'ssh {username}@{ip_address}', encoding='utf-8', timeout=20)
+        session.expect('Password:')
+        session.sendline(password)
+        session.expect('>')
+        
+        session.sendline('enable')
+        session.expect('Password:')
+        session.sendline(password_enable)
+        session.expect('#')
+
+        session.sendline('configure terminal')
+        session.expect(r'\(config\)#')
+        session.sendline(f'hostname {new_hostname}')
+        session.expect(rf'{new_hostname}\(config\)#')
+        print(f"Hostname changed to {new_hostname} successfully.")
+        
+        session.sendline('exit')
+        session.close()
+
+    elif option.lower() == "c":
+        ip = '192.168.56.101'
+        user = 'cisco'
+        pwd = 'cisco123!'
+
+        connection = pexpect.spawn(f'telnet {ip}', encoding='utf-8', timeout=20)
+        connection.expect('Username:')
+        connection.sendline(user)
+        connection.expect('Password:')
+        connection.sendline(pwd)
+        connection.expect('#')
+
+        connection.sendline('terminal length 0')
+        connection.expect('#')
+
+        connection.sendline('show running-config')
+        connection.expect('#')
+        config_info = connection.before
+
+        with open('config_backup.txt', 'w+') as outfile:
+            outfile.write(config_info)
+        print("Configuration saved to config_backup.txt.")
+
+        connection.sendline('exit')
+        connection.close()
+
+    elif option.lower() == "h":
+        check_device_hardening()
+
+    elif option.lower() == "sy":
+        configure_syslog()
+
+    elif option.lower() == "l":
+        configure_loopback_and_rip()
+
+    elif option.lower() == "q":
+        exit()
+
+    else:
+        print("Enter valid option.")
