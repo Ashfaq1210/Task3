@@ -182,7 +182,7 @@ while op == True:
         connection.expect('#')
         config_info = connection.before
 
-        with open('config_backup.txt', 'w+') as outfile:
+        with open('config_Ash1.txt', 'w+') as outfile:
             outfile.write(config_info)
         print("Configuration saved to config_backup.txt.")
 
