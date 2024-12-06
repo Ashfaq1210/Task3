@@ -8,7 +8,7 @@ device = {
     'ip': '192.168.56.101',  
     'username': 'cisco',  
     'password': 'cisco123!',  
-    'secret': 'class123!'  # Enable password
+    'secret': 'class123!' 
 }
 
 # Commands for configuring loopback and RIP
@@ -17,7 +17,7 @@ config_commands = [
     'ip address 10.1.1.1 255.255.255.255',  # Assign an IP to the loopback interface
     'exit',
     'interface loopback 2',
-    'ip address 10.2.2.2 255.255.255.0',
+    'ip address 10.2.2.2 255.255.255.0',    # Assigning another loopback interface
     'exit',
     'router rip',
     'version 2',                             
