@@ -16,11 +16,14 @@ config_commands = [
     'interface loopback 1',
     'ip address 10.1.1.1 255.255.255.255',  # Assign an IP to the loopback interface
     'exit',
+    'interface loopback 2',
+    'ip address 10.2.2.2 255.255.255.0',
+    'exit',
     'router rip',
-    'version 2',                             # Use RIP version 2
-    'no auto-summary',                       # Disable auto-summary
-    'network 10.1.1.0',                      # Advertise the loopback in RIP
-    'network 192.168.56.0'                   # Replace with your network for RIP
+    'version 2',                             
+    'no auto-summary',                       
+    'network 10.1.1.0',                      
+    'network 192.168.56.0'                   
 ]
 
 # Hardening checks as regex patterns
