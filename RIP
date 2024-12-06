@@ -26,7 +26,7 @@ config_commands = [
     'network 192.168.56.0'                   
 ]
 
-# Hardening checks as regex patterns
+# Hardening checks
 hardening_checks = {
     "SSH enabled": r"ip ssh version 2",
     "Telnet disabled": r"no\s+transport\s+input\s+telnet",
@@ -71,7 +71,7 @@ def configure_syslog():
         connection = ConnectHandler(**device)
         print("Connected to the device successfully.")
 
-        # Apply syslog configuration commands
+        # syslog configuration commands
         print("Configuring syslog settings...")
         output = connection.send_config_set(syslog_commands)
         print("Syslog configuration output:")
