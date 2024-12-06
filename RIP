@@ -32,7 +32,8 @@ hardening_checks = {
     "Telnet disabled": r"no\s+transport\s+input\s+telnet",
     "Strong passwords enforced": r"security password min-length \d+",
     "Logging configured": r"logging host \d+\.\d+\.\d+\.\d+",
-    "HTTP server disabled": r"no ip http server"
+    "HTTP server disabled": r"no ip http server" , 
+    "Syslog configered": r"logging host"
 }
 
 # Syslog configuration commands
